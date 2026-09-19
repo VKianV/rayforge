@@ -1,4 +1,4 @@
-use core::{
+use rayforge_core::{
     app_error::AppError,
     camera::CameraBuilder,
     constants::{GROUND_CENTER, SPHERE_CENTER},
