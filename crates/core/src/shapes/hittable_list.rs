@@ -1,4 +1,4 @@
-use crate::mods::{
+use crate::{
     interval::Interval,
     ray::Ray,
     shapes::hittable::{HitRecord, Hittable, Shapes},

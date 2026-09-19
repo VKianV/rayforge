@@ -1,4 +1,4 @@
-use based_tracer::mods::{
+use core::{
     app_error::AppError,
     camera::CameraBuilder,
     constants::{GROUND_CENTER, SPHERE_CENTER},
