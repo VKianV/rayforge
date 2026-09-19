@@ -1,4 +1,4 @@
-use crate::mods::{
+use crate::{
     constants::{BLUE_COLOR, WHITE_COLOR},
     interval::Interval,
     ray::Ray,

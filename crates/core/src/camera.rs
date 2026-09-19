@@ -9,7 +9,7 @@ use std::{
     time::Instant,
 };
 
-use crate::mods::{
+use crate::{
     app_error::AppError,
     color::{ray_color, write_color},
     config::Config,

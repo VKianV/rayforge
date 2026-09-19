@@ -1,16 +1,23 @@
-[package]
-name = "based-tracer"
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+# name = "fire cracker"
 version = "0.1.1"
 edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+core  = { path = "crates/core" }
+rander = { path = "crates/rander" }
 
 [profile.release]
 panic = "abort"
 lto = true
 strip = true
 
-[dependencies]
-
-[lints.clippy]
+[workspace.lints.clippy]
 # UM, ACTUALLY
 pedantic = { level = "deny", priority = -1 }
 # DEVELOPING LINTS

@@ -4,7 +4,7 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-use crate::mods::app_error::ConfigError;
+use crate::app_error::ConfigError;
 
 pub struct Config {
     pub map: HashMap<String, String>,
