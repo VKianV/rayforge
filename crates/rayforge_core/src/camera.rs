@@ -47,10 +47,12 @@ impl Default for CameraBuilder {
 }
 
 impl CameraBuilder {
+  #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn from_config(path: &str) -> Self {
         let mut defaults = Self::default();
 
@@ -93,42 +95,50 @@ impl CameraBuilder {
         self
     }
 
-    pub fn image_width_pixels(mut self, n: usize) -> Self {
+    #[must_use]
+    pub const fn image_width_pixels(mut self, n: usize) -> Self {
         self.image_width_pixels = n;
         self
     }
 
-    pub fn image_height_pixels(mut self, n: usize) -> Self {
+    #[must_use]
+    pub const fn image_height_pixels(mut self, n: usize) -> Self {
         self.image_height_pixels = n;
         self
     }
 
-    pub fn focal_length(mut self, f: f64) -> Self {
+    #[must_use]
+    pub const fn focal_length(mut self, f: f64) -> Self {
         self.focal_length = f;
         self
     }
 
-    pub fn vfov(mut self, deg: f64) -> Self {
+    #[must_use]
+    pub const fn vfov(mut self, deg: f64) -> Self {
         self.vfov = deg;
         self
     }
 
-    pub fn viewport_height_pixel(mut self, h: f64) -> Self {
+    #[must_use]
+    pub const fn viewport_height_pixel(mut self, h: f64) -> Self {
         self.viewport_height_pixel = h;
         self
     }
 
-    pub fn samples_per_pixel(mut self, n: usize) -> Self {
+    #[must_use]
+    pub const fn samples_per_pixel(mut self, n: usize) -> Self {
         self.samples_per_pixel = n;
         self
     }
 
-    pub fn max_depth(mut self, n: usize) -> Self {
+    #[must_use]
+    pub const fn max_depth(mut self, n: usize) -> Self {
         self.max_depth = n;
         self
     }
 
-    pub fn num_threads(mut self, n: usize) -> Self {
+    #[must_use]
+    pub const fn num_threads(mut self, n: usize) -> Self {
         self.num_threads = Some(n);
         self
     }
@@ -209,11 +219,11 @@ impl Camera {
 
         println!(
             "Rendering with {} threads (dynamic scheduling)...",
-            &self.num_threads
+            self.num_threads
         );
 
         print!("\x1b[?25l");
-        print!("Scanlines remaining: {}", &self.image_height_pixels);
+        print!("Scanlines remaining: {}", self.image_height_pixels);
         const CHUNK_ROWS: usize = 8;
 
         let next_row = AtomicUsize::new(0);
@@ -281,7 +291,7 @@ impl Camera {
                 rows_received += end_row - start_row;
 
                 let remaining = self.image_height_pixels - rows_received;
-                print!("\x1b[21G\x1b[K {}", remaining);
+                print!("\x1b[21G\x1b[K {remaining}",);
             }
 
             writeln!(out, "P6")?;
