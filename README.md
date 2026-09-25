@@ -64,4 +64,4 @@ Missing keys fall back to sensible defaults. The whole file can be absent and th
 
 ### Current Scene
 
-A small sphere floating above a giant ground sphere (classic “two spheres” test). Easy to extend — just push more Shapes::Sphere into the HittableList in main.rs.
+A small sphere floating above a giant ground sphere (classic “two spheres” test). Easy to extend. just push more `Shapes::Sphere` into the `HittableList` in `main.rs`.
