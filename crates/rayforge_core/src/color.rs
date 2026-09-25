@@ -20,9 +20,10 @@ pub fn ray_color(ray: &Ray, world: &impl Hittable) -> RGB {
 
 #[inline]
 pub fn write_color<W: Write>(output: &mut W, pixel: &RGB) -> io::Result<()> {
+    const INTENSITY: Interval = Interval::new(0.000, 0.999);
     output.write_all(&[
-        (255.999 * pixel.x()) as u8,
-        (255.999 * pixel.y()) as u8,
-        (255.999 * pixel.z()) as u8,
+        (256.0 * INTENSITY.clamp(pixel.x())) as u8,
+        (256.0 * INTENSITY.clamp(pixel.y())) as u8,
+        (256.0 * INTENSITY.clamp(pixel.z())) as u8,
     ])
 }
