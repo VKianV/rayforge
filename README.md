@@ -1,6 +1,5 @@
-rayforge
-
-A multithreaded, zero-dependency ray tracer written in pure Rust.
+# rayforge
+## A multithreaded, zero-dependency ray tracer written in pure Rust.
 
 Inspired by Ray Tracing in One Weekend. Currently renders spheres with anti-aliasing, multi-threading, and a simple config file. Outputs PPM.
 
