@@ -63,7 +63,7 @@ max_depth=50
 Missing keys fall back to sensible defaults. The whole file can be absent and the renderer still runs.
 
 ### Current Scene
-![alt text](render.ppm)
+![the renderd result](render.png)
 
 
 A small sphere floating above a giant ground sphere (classic “two spheres” test). Easy to extend. just push more `Shapes::Sphere` into the `HittableList` in `main.rs`.
