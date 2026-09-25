@@ -1,3 +1,12 @@
+use crate::{
+    app_error::AppError,
+    color::{ray_color, write_color},
+    config::Config,
+    ray::Ray,
+    shapes::hittable_list::HittableList,
+    vec3::{Point3, RGB, Vec3},
+};
+use rander::Rng;
 use std::{
     fs::File,
     io::{BufWriter, Write},
@@ -7,15 +16,6 @@ use std::{
     },
     thread,
     time::Instant,
-};
-
-use crate::{
-    app_error::AppError,
-    color::{ray_color, write_color},
-    config::Config,
-    ray::Ray,
-    shapes::hittable_list::HittableList,
-    vec3::{Point3, Vec3},
 };
 
 pub struct CameraBuilder {
@@ -47,7 +47,7 @@ impl Default for CameraBuilder {
 }
 
 impl CameraBuilder {
-  #[must_use]
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -185,6 +185,7 @@ impl CameraBuilder {
             output_name: self.output_name,
             image_width_pixels: self.image_width_pixels,
             image_height_pixels: self.image_height_pixels,
+            samples_per_pixel: self.samples_per_pixel, // <-- new
             num_threads,
             //derived
             pixel_delta_width,
@@ -201,6 +202,7 @@ pub struct Camera {
     image_width_pixels: usize,
     image_height_pixels: usize,
     num_threads: usize,
+    samples_per_pixel: usize,
 
     // derived
     pixel_delta_width: Vec3,
@@ -210,6 +212,22 @@ pub struct Camera {
 }
 
 impl Camera {
+    /// Random offset in `[-0.5, 0.5] x [-0.5, 0.5]`.
+    #[inline]
+    fn sample_square(rng: &mut Rng) -> (f64, f64) {
+        (rng.next_f64() - 0.5, rng.next_f64() - 0.5)
+    }
+
+    /// Build a camera ray aimed at a randomly-jittered point inside `pixel_center`.
+    #[inline]
+    fn get_ray(&self, pixel_center: &Point3, rng: &mut Rng) -> Ray {
+        let (ox, oy) = Self::sample_square(rng);
+        let pixel_sample =
+            *pixel_center + ox * self.pixel_delta_width + oy * self.pixel_delta_height;
+
+        Ray::new(self.camera_center, pixel_sample - self.camera_center)
+    }
+
     pub fn render(&self, world: &HittableList) -> Result<(), AppError> {
         let start = Instant::now();
 
@@ -230,9 +248,12 @@ impl Camera {
         let (tx, rx) = mpsc::channel::<(usize, usize, Vec<u8>)>();
 
         thread::scope(|s| -> Result<(), AppError> {
+            let mut master_rng = Rng::default();
             for _ in 0..self.num_threads {
                 let tx = tx.clone();
                 let next_row = &next_row;
+
+                let mut rng = master_rng.split();
 
                 s.spawn(move || {
                     loop {
@@ -247,22 +268,25 @@ impl Camera {
                         let rows = end_row - start_row;
 
                         // One allocation for the whole chunk.
-                        let mut chunk = Vec::with_capacity(rows * self.image_height_pixels * 3);
+                        let mut chunk = Vec::with_capacity(rows * self.image_width_pixels * 3);
+
+                        let inv_samples = 1.0 / self.samples_per_pixel as f64;
 
                         for h in start_row..end_row {
-                            // Do the vertical multiplication once per row.
                             let mut pixel_center =
                                 self.top_left_pixel_position + h as f64 * self.pixel_delta_height;
 
                             for _ in 0..self.image_width_pixels {
-                                let ray_direction = pixel_center - self.camera_center;
+                                let mut pixel_color = RGB::new(0.0, 0.0, 0.0);
 
-                                let ray = Ray::new(self.camera_center, ray_direction);
+                                for _ in 0..self.samples_per_pixel {
+                                    let ray = self.get_ray(&pixel_center, &mut rng);
+                                    pixel_color += ray_color(&ray, world);
+                                }
 
-                                write_color(&mut chunk, &ray_color(&ray, world))
+                                write_color(&mut chunk, &(inv_samples * pixel_color))
                                     .expect("couldn't write color");
 
-                                // Addition instead of w * pixel_delta_hor.
                                 pixel_center += self.pixel_delta_width;
                             }
                         }
