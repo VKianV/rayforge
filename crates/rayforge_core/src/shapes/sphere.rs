@@ -1,21 +1,25 @@
 use crate::{
     interval::Interval,
+    material::Material,
     ray::Ray,
     shapes::hittable::{HitRecord, Hittable},
     vec3::{Point3, Vec3},
 };
+use std::sync::Arc;
 
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
+    pub material: Arc<dyn Material>,
 }
 
 impl Sphere {
     #[must_use]
-    pub const fn new(center: Point3, radius: f64) -> Self {
+    pub fn new(center: Point3, radius: f64, material: Arc<dyn Material>) -> Self {
         Self {
             center,
             radius: radius.max(0.0),
+            material,
         }
     }
 }
@@ -34,7 +38,6 @@ impl Hittable for Sphere {
 
         let sqrtd = discriminant.sqrt();
 
-        // Find the nearest root that lies in the acceptable range.
         let mut root = (h - sqrtd) / a;
         if !ray_distance_interval.surrounds(root) {
             root = (h + sqrtd) / a;
@@ -45,7 +48,13 @@ impl Hittable for Sphere {
 
         let point = ray.at(root);
 
-        let mut hit_record = HitRecord::new(point, Vec3::default(), root, false);
+        let mut hit_record = HitRecord::new(
+            point,
+            Vec3::default(),
+            Some(Arc::clone(&self.material)),
+            root,
+            false,
+        );
         hit_record.set_face_and_normal(ray, (point - self.center) / self.radius);
 
         Some(hit_record)

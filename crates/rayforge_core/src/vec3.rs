@@ -93,6 +93,27 @@ impl Vec3 {
     //         -on_unit_sphere
     //     }
     // }
+    #[must_use]
+    pub fn near_zero(self) -> bool {
+        const S: f64 = 1e-8;
+        self.x().abs() < S && self.y().abs() < S && self.z().abs() < S
+    }
+
+    /// Reflect `self` about `n` (n must be unit length).
+    #[must_use]
+    pub fn reflect(self, n: Self) -> Self {
+        self - 2.0 * self.dot(n) * n
+    }
+
+    /// Refract `self` (unit vector) about `n` (unit vector).
+    /// `etai_over_etat` is the ratio of incident to transmitted IOR.
+    #[must_use]
+    pub fn refract(self, n: Self, etai_over_etat: f64) -> Self {
+        let cos_theta = (-self).dot(n).min(1.0);
+        let r_out_perp = etai_over_etat * (self + cos_theta * n);
+        let r_out_parallel = -(1.0 - r_out_perp.length_squared()).abs().sqrt() * n;
+        r_out_perp + r_out_parallel
+    }
 }
 
 impl Neg for Vec3 {

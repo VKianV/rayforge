@@ -1,9 +1,8 @@
 use crate::{
-    constants::{BLUE_COLOR, WHITE_COLOR},
     interval::Interval,
     ray::Ray,
-    shapes::hittable::Hittable,
-    vec3::{RGB, Vec3},
+    shapes::{hittable::Hittable, hittable_list::HittableList},
+    vec3::{Point3, RGB, Vec3},
 };
 use rander::Rng;
 use std::io::{self, Write};
@@ -14,27 +13,29 @@ use std::io::{self, Write};
 /// * Lambertian scattering (`normal + random_unit_vector`)
 /// * 0.5 reflectance (i.e. 50% gray diffuse)
 #[must_use]
-pub fn ray_color(ray: &Ray, world: &impl Hittable, depth: usize, rng: &mut Rng) -> RGB {
-    // If we've exceeded the ray bounce limit, no more light is gathered.
-    if depth == 0 {
+pub fn ray_color(ray: &Ray, world: &HittableList, max_depth: usize, rng: &mut Rng) -> RGB {
+    // No more light is gathered once the bounce limit is exhausted.
+    if max_depth == 0 {
         return RGB::new(0.0, 0.0, 0.0);
     }
 
-    if let Some(hit_record) = world.hit(ray, Interval::new(0.001, f64::INFINITY)) {
-        // True Lambertian: normal + random unit vector
-        let direction = hit_record.normal + Vec3::random_unit_vector(rng);
-        return 0.5
-            * ray_color(
-                &Ray::new(hit_record.point, direction),
-                world,
-                depth - 1,
-                rng,
-            );
+    if let Some(rec) = world.hit(ray, Interval::new(0.001, f64::INFINITY)) {
+        let mut scattered = Ray::new(Point3::ZERO, Vec3::ZERO);
+        let mut attenuation = RGB::new(0.0, 0.0, 0.0);
+
+        if let Some(material) = &rec.material 
+            && material.scatter(ray, &rec, &mut attenuation, &mut scattered, rng) {
+                return attenuation * ray_color(&scattered, world, max_depth - 1, rng);
+        }
+
+        // Absorbed.
+        return RGB::new(0.0, 0.0, 0.0);
     }
 
-    let a = 0.5 * (ray.direction().unit().y() + 1.0);
-
-    (1.0 - a) * WHITE_COLOR + a * BLUE_COLOR
+    // Background gradient.
+    let unit_direction = ray.direction().unit();
+    let a = 0.5 * (unit_direction.y() + 1.0);
+    (1.0 - a) * RGB::new(1.0, 1.0, 1.0) + a * RGB::new(0.5, 0.7, 1.0)
 }
 
 #[inline]

@@ -1,4 +1,4 @@
-//! this Random Number Generator implmements SplitMix64 algorithm
+//! this Random Number Generator implmements `SplitMix64` algorithm
 
 use std::hash::{BuildHasher, Hasher, RandomState};
 
