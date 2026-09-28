@@ -187,6 +187,7 @@ impl CameraBuilder {
             image_height_pixels: self.image_height_pixels,
             samples_per_pixel: self.samples_per_pixel, // <-- new
             num_threads,
+            max_depth: self.max_depth, // <-- new
             //derived
             pixel_delta_width,
             pixel_delta_height,
@@ -202,6 +203,7 @@ pub struct Camera {
     image_width_pixels: usize,
     image_height_pixels: usize,
     num_threads: usize,
+    max_depth: usize, // <-- new
     samples_per_pixel: usize,
 
     // derived
@@ -281,7 +283,7 @@ impl Camera {
 
                                 for _ in 0..self.samples_per_pixel {
                                     let ray = self.get_ray(&pixel_center, &mut rng);
-                                    pixel_color += ray_color(&ray, world);
+                                    pixel_color += ray_color(&ray, world, self.max_depth, &mut rng);
                                 }
 
                                 write_color(&mut chunk, &(inv_samples * pixel_color))

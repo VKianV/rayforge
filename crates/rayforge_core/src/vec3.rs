@@ -1,3 +1,4 @@
+use rander::Rng;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub};
 
 pub type RGB = Vec3;
@@ -57,6 +58,41 @@ impl Vec3 {
     pub fn unit(self) -> Self {
         self / self.length()
     }
+
+    #[must_use]
+    pub fn random(min: f64, max: f64, rng: &mut Rng) -> Self {
+        let span = max - min;
+        Self(
+            min + rng.next_f64() * span,
+            min + rng.next_f64() * span,
+            min + rng.next_f64() * span,
+        )
+    }
+
+    /// Rejection-sample a uniformly distributed unit vector on the sphere.
+    #[must_use]
+    pub fn random_unit_vector(rng: &mut Rng) -> Self {
+        loop {
+            let p = Self::random(-1.0, 1.0, rng);
+            let lensq = p.length_squared();
+            // Reject the "black hole" near the origin so normalizing
+            // can't produce [±inf, ±inf, ±inf] from float underflow.
+            if 1e-160 < lensq && lensq <= 1.0 {
+                return p / lensq.sqrt();
+            }
+        }
+    }
+
+    // /// Random direction on the same hemisphere as `normal`.
+    // #[must_use]
+    // pub fn random_on_hemisphere(normal: Self, rng: &mut Rng) -> Self {
+    //     let on_unit_sphere = Self::random_unit_vector(rng);
+    //     if on_unit_sphere.dot(normal) > 0.0 {
+    //         on_unit_sphere
+    //     } else {
+    //         -on_unit_sphere
+    //     }
+    // }
 }
 
 impl Neg for Vec3 {
