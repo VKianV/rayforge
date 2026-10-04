@@ -13,6 +13,7 @@ rander = { path = "crates/rander" }
 
 [profile.release]
 panic = "abort"
+codegen-units = 1
 lto = true
 strip = true
 

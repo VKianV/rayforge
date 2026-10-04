@@ -1,12 +1,17 @@
 use crate::{
-    constants::{BLUE_COLOR, WHITE_COLOR},
     interval::Interval,
     ray::Ray,
-    shapes::hittable::Hittable,
-    vec3::{RGB, Vec3},
+    shapes::{hittable::Hittable, hittable_list::HittableList},
+    vec3::{Point3, Vec3},
 };
 use rander::Rng;
 use std::io::{self, Write};
+
+/// `RGB` is  aliase of `Vec3`
+pub type RGB = Vec3;
+
+/// blue color constant
+pub const BLUE_COLOR: RGB = RGB::new(0.5, 0.7, 1.0);
 
 /// Recursive ray marcher with:
 /// * depth limiting (avoids stack overflow)
@@ -14,27 +19,31 @@ use std::io::{self, Write};
 /// * Lambertian scattering (`normal + random_unit_vector`)
 /// * 0.5 reflectance (i.e. 50% gray diffuse)
 #[must_use]
-pub fn ray_color(ray: &Ray, world: &impl Hittable, depth: usize, rng: &mut Rng) -> RGB {
-    // If we've exceeded the ray bounce limit, no more light is gathered.
-    if depth == 0 {
-        return RGB::new(0.0, 0.0, 0.0);
+pub fn ray_color(ray: &Ray, world: &HittableList, max_depth: usize, rng: &mut Rng) -> RGB {
+    // No more light is gathered once the bounce limit is exhausted.
+    if max_depth == 0 {
+        return RGB::ZERO;
     }
 
-    if let Some(hit_record) = world.hit(ray, Interval::new(0.001, f64::INFINITY)) {
-        // True Lambertian: normal + random unit vector
-        let direction = hit_record.normal + Vec3::random_unit_vector(rng);
-        return 0.5
-            * ray_color(
-                &Ray::new(hit_record.point, direction),
-                world,
-                depth - 1,
-                rng,
-            );
+    if let Some(record) = world.hit(ray, Interval::new(0.001, f64::INFINITY)) {
+        let mut scattered = Ray::new(Point3::ZERO, Vec3::ZERO);
+        let mut attenuation = RGB::ZERO;
+
+        if let Some(material) = &record.material
+            && material.scatter(ray, &record, &mut attenuation, &mut scattered, rng)
+        {
+            return attenuation * ray_color(&scattered, world, max_depth - 1, rng);
+        }
+
+        // Absorbed.
+        return RGB::ZERO;
     }
 
-    let a = 0.5 * (ray.direction().unit().y() + 1.0);
+    // Background gradient.
+    let unit_direction = ray.direction().unit();
+    let a = 0.5 * (unit_direction.y() + 1.0);
 
-    (1.0 - a) * WHITE_COLOR + a * BLUE_COLOR
+    (1.0 - a) * RGB::ONE + a * BLUE_COLOR
 }
 
 #[inline]
@@ -51,13 +60,9 @@ pub fn write_color<W: Write>(output: &mut W, pixel: &RGB) -> io::Result<()> {
     const INTENSITY: Interval = Interval::new(0.000, 0.999);
 
     // Apply a linear-to-gamma transform for gamma 2.
-    let r = linear_to_gamma(pixel.x());
-    let g = linear_to_gamma(pixel.y());
-    let b = linear_to_gamma(pixel.z());
-
     output.write_all(&[
-        (255.999 * INTENSITY.clamp(r)) as u8,
-        (255.999 * INTENSITY.clamp(g)) as u8,
-        (255.999 * INTENSITY.clamp(b)) as u8,
+        (255.999 * INTENSITY.clamp(linear_to_gamma(pixel.x()))) as u8,
+        (255.999 * INTENSITY.clamp(linear_to_gamma(pixel.y()))) as u8,
+        (255.999 * INTENSITY.clamp(linear_to_gamma(pixel.z()))) as u8,
     ])
 }
