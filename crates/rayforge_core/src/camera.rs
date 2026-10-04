@@ -1,10 +1,10 @@
 use crate::{
     app_error::AppError,
-    color::{ray_color, write_color},
+    color::{RGB, ray_color, write_color},
     config::Config,
     ray::Ray,
     shapes::hittable_list::HittableList,
-    vec3::{Point3, RGB, Vec3},
+    vec3::{Point3, Vec3},
 };
 use rander::Rng;
 use std::{
@@ -20,28 +20,28 @@ use std::{
 
 pub struct CameraBuilder {
     output_name: String,
+    num_threads: Option<usize>,
     image_width_pixels: usize,
     image_height_pixels: usize,
-    focal_length: f64,
-    vfov: f64,
     viewport_height_pixel: f64,
+    focal_length: f64,
     samples_per_pixel: usize,
     max_depth: usize,
-    num_threads: Option<usize>,
+    vfov: f64,
 }
 
 impl Default for CameraBuilder {
     fn default() -> Self {
         Self {
             output_name: "render.ppm".to_string(),
-            image_width_pixels: 1920,
-            image_height_pixels: 1080,
-            focal_length: 1.0,
-            vfov: 90.0,
+            num_threads: None,
+            image_width_pixels: 1280,
+            image_height_pixels: 720,
             viewport_height_pixel: 2.0,
+            focal_length: 1.0,
             samples_per_pixel: 100,
             max_depth: 50,
-            num_threads: None,
+            vfov: 90.0,
         }
     }
 }
@@ -200,12 +200,11 @@ impl CameraBuilder {
 pub struct Camera {
     // inputs (kept around for rendering)
     output_name: String,
+    num_threads: usize,
     image_width_pixels: usize,
     image_height_pixels: usize,
-    num_threads: usize,
-    max_depth: usize, // <-- new
     samples_per_pixel: usize,
-
+    max_depth: usize,
     // derived
     pixel_delta_width: Vec3,
     pixel_delta_height: Vec3,
@@ -242,8 +241,9 @@ impl Camera {
             self.num_threads
         );
 
-        print!("\x1b[?25l");
-        print!("Scanlines remaining: {}", self.image_height_pixels);
+        eprint!("\x1b[?25l");
+        eprint!("Scanlines remaining: {}", self.image_height_pixels);
+
         const CHUNK_ROWS: usize = 8;
 
         let next_row = AtomicUsize::new(0);
@@ -279,7 +279,7 @@ impl Camera {
                                 self.top_left_pixel_position + h as f64 * self.pixel_delta_height;
 
                             for _ in 0..self.image_width_pixels {
-                                let mut pixel_color = RGB::new(0.0, 0.0, 0.0);
+                                let mut pixel_color = RGB::ZERO;
 
                                 for _ in 0..self.samples_per_pixel {
                                     let ray = self.get_ray(&pixel_center, &mut rng);
@@ -317,7 +317,7 @@ impl Camera {
                 rows_received += end_row - start_row;
 
                 let remaining = self.image_height_pixels - rows_received;
-                print!("\x1b[21G\x1b[K {remaining}",);
+                eprint!("\x1b[21G\x1b[K {remaining}",);
             }
 
             writeln!(out, "P6")?;
@@ -335,8 +335,8 @@ impl Camera {
             Ok(())
         })?;
 
-        println!("\x1b[?25h");
-        println!("Done in {:.3}s!", start.elapsed().as_secs_f64());
+        eprintln!("\x1b[?25h");
+        eprintln!("Done in {:.3}s!", start.elapsed().as_secs_f64());
 
         Ok(())
     }

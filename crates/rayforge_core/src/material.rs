@@ -1,13 +1,10 @@
-use crate::{
-    ray::Ray,
-    shapes::hittable::HitRecord,
-    vec3::{RGB, Vec3},
-};
+use crate::{color::RGB, ray::Ray, shapes::hittable::HitRecord, vec3::Vec3};
 use rander::Rng;
-use std::sync::Arc;
 
-// Convenience alias so scene setup reads like the book.
-pub type SharedMaterial = Arc<dyn Material>;
+pub struct ScatterRecord {
+    pub attenuation: RGB,
+    pub scattered: Ray,
+}
 
 /// A material decides how an incoming ray scatters off a surface.
 ///
@@ -17,20 +14,15 @@ pub trait Material: Send + Sync {
     /// considered absorbed and the caller should treat the hit as black.
     fn scatter(
         &self,
-        _r_in: &Ray,
-        _rec: &HitRecord,
-        _attenuation: &mut RGB,
-        _scattered: &mut Ray,
-        _rng: &mut Rng,
-    ) -> bool {
-        false
-    }
+        ray_in: &Ray,
+        record: &HitRecord,
+        attenuation: &mut RGB,
+        scattered: &mut Ray,
+        rng: &mut Rng,
+    ) -> bool;
 }
 
-// ---------------------------------------------------------------------------
-// Lambertian (diffuse)
-// ---------------------------------------------------------------------------
-
+/// Lambertian (diffuse)
 pub struct Lambertian {
     pub albedo: RGB,
 }
@@ -45,7 +37,7 @@ impl Lambertian {
 impl Material for Lambertian {
     fn scatter(
         &self,
-        _r_in: &Ray,
+        _ray_in: &Ray,
         rec: &HitRecord,
         attenuation: &mut RGB,
         scattered: &mut Ray,
@@ -60,14 +52,12 @@ impl Material for Lambertian {
 
         *scattered = Ray::new(rec.point, scatter_direction);
         *attenuation = self.albedo;
+
         true
     }
 }
 
-// ---------------------------------------------------------------------------
-// Metal (mirror, optionally fuzzy)
-// ---------------------------------------------------------------------------
-
+/// Metal (mirror, optionally fuzzy)
 pub struct Metal {
     pub albedo: RGB,
     fuzz: f64,
@@ -86,27 +76,24 @@ impl Metal {
 impl Material for Metal {
     fn scatter(
         &self,
-        r_in: &Ray,
-        rec: &HitRecord,
+        ray_in: &Ray,
+        record: &HitRecord,
         attenuation: &mut RGB,
         scattered: &mut Ray,
         rng: &mut Rng,
     ) -> bool {
-        let reflected = r_in.direction().unit().reflect(rec.normal);
+        let reflected = ray_in.direction().unit().reflect(record.normal);
         let reflected = reflected + self.fuzz * Vec3::random_unit_vector(rng);
 
-        *scattered = Ray::new(rec.point, reflected);
+        *scattered = Ray::new(record.point, reflected);
         *attenuation = self.albedo;
 
         // Absorb rays that would scatter into the surface.
-        scattered.direction().dot(rec.normal) > 0.0
+        scattered.direction().dot(record.normal) > 0.0
     }
 }
 
-// ---------------------------------------------------------------------------
-// Dielectric (glass / water / air bubble)
-// ---------------------------------------------------------------------------
-
+/// Dielectric (glass / water / air bubble)
 pub struct Dielectric {
     /// Refractive index in vacuum/air, OR (when the material is embedded
     /// inside another dielectric) the ratio of the object's IOR over the
@@ -131,36 +118,37 @@ impl Dielectric {
 impl Material for Dielectric {
     fn scatter(
         &self,
-        r_in: &Ray,
-        rec: &HitRecord,
+        ray_in: &Ray,
+        record: &HitRecord,
         attenuation: &mut RGB,
         scattered: &mut Ray,
         rng: &mut Rng,
     ) -> bool {
         // Glass absorbs nothing.
-        *attenuation = RGB::new(1.0, 1.0, 1.0);
+        *attenuation = RGB::ONE;
 
         // When the ray is leaving the object, the ratio flips.
-        let ri = if rec.front_face {
+        let ri = if record.front_face {
             1.0 / self.refraction_index
         } else {
             self.refraction_index
         };
 
-        let unit_direction = r_in.direction().unit();
-        let cos_theta = (-unit_direction).dot(rec.normal).min(1.0);
+        let unit_direction = ray_in.direction().unit();
+        let cos_theta = (-unit_direction).dot(record.normal).min(1.0);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
         // Snell's law has no solution -> total internal reflection.
         let cannot_refract = ri * sin_theta > 1.0;
 
         let direction = if cannot_refract || Self::reflectance(cos_theta, ri) > rng.next_f64() {
-            unit_direction.reflect(rec.normal)
+            unit_direction.reflect(record.normal)
         } else {
-            unit_direction.refract(rec.normal, ri)
+            unit_direction.refract(record.normal, ri)
         };
 
-        *scattered = Ray::new(rec.point, direction);
+        *scattered = Ray::new(record.point, direction);
+
         true
     }
 }

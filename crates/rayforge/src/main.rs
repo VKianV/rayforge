@@ -1,27 +1,28 @@
 use rayforge_core::{
     app_error::AppError,
     camera::CameraBuilder,
-    material::{Dielectric, Lambertian, Metal, SharedMaterial},
+    color::RGB,
+    material::{Dielectric, Lambertian, Metal},
     shapes::{hittable::Shapes, hittable_list::HittableList, sphere::Sphere},
-    vec3::{Point3, RGB},
+    vec3::Point3,
 };
-use std::sync::Arc;
+use std::{process, sync::Arc};
 
 fn main() {
     if let Err(e) = run() {
         eprintln!("{e}");
-        std::process::exit(1);
+        process::exit(1);
     }
 }
 
 fn run() -> Result<(), AppError> {
     let mut world = HittableList::new();
 
-    let material_ground: SharedMaterial = Arc::new(Lambertian::new(RGB::new(0.8, 0.8, 0.0)));
-    let material_center: SharedMaterial = Arc::new(Lambertian::new(RGB::new(0.1, 0.2, 0.5)));
-    let material_left: SharedMaterial = Arc::new(Dielectric::new(1.50));
-    let material_bubble: SharedMaterial = Arc::new(Dielectric::new(1.00 / 1.50));
-    let material_right: SharedMaterial = Arc::new(Metal::new(RGB::new(0.8, 0.6, 0.2), 0.0));
+    let material_ground = Arc::new(Lambertian::new(RGB::new(0.8, 0.8, 0.0)));
+    let material_center = Arc::new(Lambertian::new(RGB::new(0.1, 0.2, 0.5)));
+    let material_left = Arc::new(Dielectric::new(1.50));
+    let material_bubble = Arc::new(Dielectric::new(1.00 / 1.50));
+    let material_right = Arc::new(Metal::new(RGB::new(0.8, 0.6, 0.2), 0.0));
 
     // Ground
     world.add(Shapes::Sphere(Sphere::new(
