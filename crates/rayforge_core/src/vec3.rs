@@ -117,6 +117,17 @@ impl Vec3 {
 
         ray_out_perp + ray_out_parallel
     }
+
+    #[must_use]
+    pub fn random_in_unit_disk(rng: &mut Rng) -> Self {
+        loop {
+            let p = Self::new(rng.next_f64() * 2.0 - 1.0, rng.next_f64() * 2.0 - 1.0, 0.0);
+            // Same "black hole" guard as random_unit_vector.
+            if 1e-160 < p.length_squared() && p.length_squared() < 1.0 {
+                return p;
+            }
+        }
+    }
 }
 
 impl Neg for Vec3 {
