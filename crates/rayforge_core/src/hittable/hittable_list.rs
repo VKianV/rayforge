@@ -1,7 +1,7 @@
 use crate::{
+    hittable::{HitRecord, Hittable, shapes::Shapes},
     interval::Interval,
     ray::Ray,
-    shapes::hittable::{HitRecord, Hittable, Shapes},
 };
 
 #[derive(Default)]
@@ -34,20 +34,26 @@ impl HittableList {
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, ray: &Ray, ray_distance_interval: Interval) -> Option<HitRecord> {
+    fn hit<'a>(
+        &self,
+        ray: &Ray,
+        ray_distance_interval: Interval,
+        hit_record: &'a mut HitRecord,
+    ) -> Option<&'a mut HitRecord> {
         let mut closest_so_far = ray_distance_interval.max;
-        let mut hit_anything = None;
+        let mut hit_anything = false;
 
         for object in &self.objects {
             if let Some(temp_hit_record) = object.hit(
                 ray,
                 Interval::new(ray_distance_interval.min, closest_so_far),
+                hit_record,
             ) {
                 closest_so_far = temp_hit_record.distance;
-                hit_anything = Some(temp_hit_record);
+                hit_anything = true;
             }
         }
 
-        hit_anything
+        if hit_anything { Some(hit_record) } else { None }
     }
 }

@@ -1,7 +1,7 @@
 use crate::{
+    hittable::{HitRecord, Hittable, hittable_list::HittableList},
     interval::Interval,
     ray::Ray,
-    shapes::{hittable::Hittable, hittable_list::HittableList},
     vec3::{Point3, Vec3},
 };
 use rander::Rng;
@@ -25,25 +25,32 @@ pub fn ray_color(ray: &Ray, world: &HittableList, max_depth: usize, rng: &mut Rn
         return RGB::ZERO;
     }
 
-    if let Some(record) = world.hit(ray, Interval::new(0.001, f64::INFINITY)) {
-        let mut scattered = Ray::new(Point3::ZERO, Vec3::ZERO);
-        let mut attenuation = RGB::ZERO;
+    match world.hit(
+        ray,
+        Interval::new(0.001, f64::INFINITY),
+        &mut HitRecord::default(),
+    ) {
+        Some(record) => {
+            let mut scattered = Ray::new(Point3::ZERO, Vec3::ZERO);
+            let mut attenuation = RGB::ZERO;
 
-        if let Some(material) = &record.material
-            && material.scatter(ray, &record, &mut attenuation, &mut scattered, rng)
-        {
-            return attenuation * ray_color(&scattered, world, max_depth - 1, rng);
+            if let Some(material) = &record.material
+                && material.scatter(ray, record, &mut attenuation, &mut scattered, rng)
+            {
+                return attenuation * ray_color(&scattered, world, max_depth - 1, rng);
+            }
+
+            // Absorbed.
+            RGB::ZERO
         }
+        None => {
+            // Background gradient.
+            let unit_direction = ray.direction().unit();
+            let a = 0.5 * (unit_direction.y() + 1.0);
 
-        // Absorbed.
-        return RGB::ZERO;
+            (1.0 - a) * RGB::ONE + a * BLUE_COLOR
+        }
     }
-
-    // Background gradient.
-    let unit_direction = ray.direction().unit();
-    let a = 0.5 * (unit_direction.y() + 1.0);
-
-    (1.0 - a) * RGB::ONE + a * BLUE_COLOR
 }
 
 #[inline]
