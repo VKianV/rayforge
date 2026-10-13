@@ -2,8 +2,8 @@ use rayforge_core::{
     app_error::AppError,
     camera::CameraBuilder,
     color::RGB,
-    material::{Dielectric, Lambertian, Metal},
-    shapes::{hittable::Shapes, hittable_list::HittableList, sphere::Sphere},
+    hittable::{hittable_list::HittableList, shapes::Shapes, sphere::Sphere},
+    material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal},
     vec3::Point3,
 };
 use std::{process, sync::Arc};

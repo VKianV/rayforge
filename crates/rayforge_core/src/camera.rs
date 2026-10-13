@@ -2,8 +2,8 @@ use crate::{
     app_error::AppError,
     color::{RGB, ray_color, write_color},
     config::Config,
+    hittable::hittable_list::HittableList,
     ray::Ray,
-    shapes::hittable_list::HittableList,
     vec3::{Point3, Vec3},
 };
 use rander::Rng;
@@ -125,6 +125,7 @@ impl CameraBuilder {
         defaults
     }
 
+    #[must_use]
     pub fn output_name(mut self, name: impl Into<String>) -> Self {
         self.output_name = name.into();
         self
@@ -166,7 +167,8 @@ impl CameraBuilder {
         self
     }
 
-    pub fn aspect_ratio(mut self, n: f64) -> Self {
+    #[must_use]
+    pub const fn aspect_ratio(mut self, n: f64) -> Self {
         self.aspect_ratio = n;
         self
     }
