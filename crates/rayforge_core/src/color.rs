@@ -25,31 +25,26 @@ pub fn ray_color(ray: &Ray, world: &HittableList, max_depth: usize, rng: &mut Rn
         return RGB::ZERO;
     }
 
-    match world.hit(
-        ray,
-        Interval::new(0.001, f64::INFINITY),
-        &mut HitRecord::default(),
-    ) {
-        Some(record) => {
-            let mut scattered = Ray::new(Point3::ZERO, Vec3::ZERO);
-            let mut attenuation = RGB::ZERO;
+    let hit_record = &mut HitRecord::default();
 
-            if let Some(material) = &record.material
-                && material.scatter(ray, record, &mut attenuation, &mut scattered, rng)
-            {
-                return attenuation * ray_color(&scattered, world, max_depth - 1, rng);
-            }
+    if let Some(record) = world.hit(ray, Interval::new(0.001, f64::INFINITY), hit_record) {
+        let mut scattered = Ray::new(Point3::ZERO, Vec3::ZERO);
+        let mut attenuation = RGB::ZERO;
 
-            // Absorbed.
-            RGB::ZERO
+        if let Some(material) = &record.material
+            && material.scatter(ray, record, &mut attenuation, &mut scattered, rng)
+        {
+            return attenuation * ray_color(&scattered, world, max_depth - 1, rng);
         }
-        None => {
-            // Background gradient.
-            let unit_direction = ray.direction().unit();
-            let a = 0.5 * (unit_direction.y() + 1.0);
 
-            (1.0 - a) * RGB::ONE + a * BLUE_COLOR
-        }
+        // Absorbed.
+        RGB::ZERO
+    } else {
+        // Background gradient.
+        let unit_direction = ray.direction().unit();
+        let a = 0.5 * (unit_direction.y() + 1.0);
+
+        (1.0 - a) * RGB::ONE + a * BLUE_COLOR
     }
 }
 
