@@ -11,25 +11,22 @@ pub struct HittableList {
 
 impl HittableList {
     #[must_use]
-    pub const fn new() -> Self {
-        Self {
-            objects: Vec::new(),
-        }
+    pub fn with_object(object: Shapes) -> Self {
+        Self::default().add(object)
     }
 
     #[must_use]
-    pub fn with_object(object: Shapes) -> Self {
-        let mut list = Self::new();
-        list.add(object);
-        list
-    }
-
-    pub fn clear(&mut self) {
+    pub fn clear(mut self) -> Self {
         self.objects.clear();
+
+        self
     }
 
-    pub fn add(&mut self, object: Shapes) {
+    #[must_use]
+    pub fn add(mut self, object: Shapes) -> Self {
         self.objects.push(object);
+
+        self
     }
 }
 
@@ -40,20 +37,19 @@ impl Hittable for HittableList {
         ray_distance_interval: Interval,
         hit_record: &'a mut HitRecord,
     ) -> Option<&'a mut HitRecord> {
-        let mut closest_so_far = ray_distance_interval.max;
-        let mut hit_anything = false;
+        // Seed with the far bound so we can tell "nothing hit" apart from "hit".
+        hit_record.distance = ray_distance_interval.max;
 
         for object in &self.objects {
-            if let Some(temp_hit_record) = object.hit(
+            // Reborrow trick, see below
+            let distance_max = hit_record.distance;
+            object.hit(
                 ray,
-                Interval::new(ray_distance_interval.min, closest_so_far),
+                Interval::new(ray_distance_interval.min, distance_max),
                 hit_record,
-            ) {
-                closest_so_far = temp_hit_record.distance;
-                hit_anything = true;
-            }
+            );
         }
 
-        if hit_anything { Some(hit_record) } else { None }
+        (hit_record.distance < ray_distance_interval.max).then_some(hit_record)
     }
 }
