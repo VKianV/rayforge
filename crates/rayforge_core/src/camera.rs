@@ -355,7 +355,7 @@ impl Camera {
 
                         let mut chunk = Vec::with_capacity(rows * self.image_width_pixels * 3);
 
-                        let inv_samples = 1.0 / self.samples_per_pixel as f64;
+                        let scale = 1.0 / self.samples_per_pixel as f64;
 
                         for h in start_row..end_row {
                             let mut pixel_center =
@@ -365,11 +365,15 @@ impl Camera {
                                 let mut pixel_color = RGB::ZERO;
 
                                 for _ in 0..self.samples_per_pixel {
-                                    let ray = self.get_ray(&pixel_center, &mut rng);
-                                    pixel_color += ray_color(&ray, world, self.max_depth, &mut rng);
+                                    pixel_color += ray_color(
+                                        &self.get_ray(&pixel_center, &mut rng),
+                                        world,
+                                        self.max_depth,
+                                        &mut rng,
+                                    );
                                 }
 
-                                write_color(&mut chunk, &(inv_samples * pixel_color))
+                                write_color(&mut chunk, &(scale * pixel_color))
                                     .expect("couldn't write color");
 
                                 pixel_center += self.pixel_delta_width;

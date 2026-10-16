@@ -1,27 +1,36 @@
-use crate::{color::RGB, hittable::HitRecord, ray::Ray};
+use crate::{
+    color::RGB,
+    hittable::HitRecord,
+    material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal},
+    ray::Ray,
+};
 use rander::Rng;
 
 pub mod dielectric;
 pub mod lambertian;
 pub mod metal;
 
-/// A material decides how an incoming ray scatters off a surface.
-///
-/// `Send + Sync` so `Arc<dyn Material>` can be shared across render threads.
-pub trait Material: Send + Sync {
-    /// Returns `true` if the ray was scattered. On `false`, the ray is
-    /// considered absorbed and the caller should treat the hit as black.
-    fn scatter(
-        &self,
-        ray_in: &Ray,
-        record: &HitRecord,
-        attenuation: &mut RGB,
-        scattered: &mut Ray,
-        rng: &mut Rng,
-    ) -> bool;
-}
-
+/// What a material returns when a ray scatters off it.
 pub struct ScatterRecord {
     pub attenuation: RGB,
     pub scattered: Ray,
+}
+
+/// Concrete material. Plain `Copy` data — no `Arc`, no `dyn`, no atomic refcount.
+#[derive(Clone, Copy)]
+pub enum Material {
+    Lambertian(Lambertian),
+    Metal(Metal),
+    Dielectric(Dielectric),
+}
+
+impl Material {
+    /// `Some(rec)` if the ray scatters, `None` if absorbed.
+    pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord> {
+        match self {
+            Self::Lambertian(m) => m.scatter(ray_in, rec, rng),
+            Self::Metal(m) => m.scatter(ray_in, rec, rng),
+            Self::Dielectric(m) => m.scatter(ray_in, rec, rng),
+        }
+    }
 }

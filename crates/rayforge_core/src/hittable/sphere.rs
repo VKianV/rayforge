@@ -5,17 +5,16 @@ use crate::{
     ray::Ray,
     vec3::Point3,
 };
-use std::sync::Arc;
 
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    pub material: Arc<dyn Material>,
+    pub material: Material, // was Arc<dyn Material>
 }
 
 impl Sphere {
     #[must_use]
-    pub fn new(center: Point3, radius: f64, material: Arc<dyn Material>) -> Self {
+    pub fn new(center: Point3, radius: f64, material: Material) -> Self {
         Self {
             center,
             radius: radius.max(0.0),
@@ -55,7 +54,7 @@ impl Hittable for Sphere {
 
         hit_record.point = point;
         hit_record.distance = root;
-        hit_record.material = Some(self.material.clone()); // Arc clone is cheap
+        hit_record.material = Some(self.material); // Copy, no atomic
         hit_record.set_face_and_normal(ray, (point - self.center) / self.radius);
 
         Some(hit_record)
