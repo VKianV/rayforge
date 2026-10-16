@@ -2,7 +2,7 @@ use crate::{
     hittable::{HitRecord, Hittable, hittable_list::HittableList},
     interval::Interval,
     ray::Ray,
-    vec3::{Point3, Vec3},
+    vec3::Vec3,
 };
 use rander::Rng;
 use std::io::{self, Write};
@@ -20,7 +20,6 @@ pub const BLUE_COLOR: RGB = RGB::new(0.5, 0.7, 1.0);
 /// * 0.5 reflectance (i.e. 50% gray diffuse)
 #[must_use]
 pub fn ray_color(ray: &Ray, world: &HittableList, max_depth: usize, rng: &mut Rng) -> RGB {
-    // No more light is gathered once the bounce limit is exhausted.
     if max_depth == 0 {
         return RGB::ZERO;
     }
@@ -28,23 +27,19 @@ pub fn ray_color(ray: &Ray, world: &HittableList, max_depth: usize, rng: &mut Rn
     let hit_record = &mut HitRecord::default();
 
     if let Some(record) = world.hit(ray, Interval::new(0.001, f64::INFINITY), hit_record) {
-        let mut scattered = Ray::new(Point3::ZERO, Vec3::ZERO);
-        let mut attenuation = RGB::ZERO;
-
-        if let Some(material) = &record.material
-            && material.scatter(ray, record, &mut attenuation, &mut scattered, rng)
+        if let Some(mat) = record.material
+            && let Some(sc) = mat.scatter(ray, record, rng)
         {
-            return attenuation * ray_color(&scattered, world, max_depth - 1, rng);
+            return sc.attenuation * ray_color(&sc.scattered, world, max_depth - 1, rng);
         }
-
-        // Absorbed.
         RGB::ZERO
     } else {
-        // Background gradient.
+      // Background gradient.
         let unit_direction = ray.direction().unit();
         let a = 0.5 * (unit_direction.y() + 1.0);
 
         (1.0 - a) * RGB::ONE + a * BLUE_COLOR
+        // RGB::ONE
     }
 }
 
@@ -58,13 +53,13 @@ fn linear_to_gamma(linear_component: f64) -> f64 {
 }
 
 #[inline]
-pub fn write_color<W: Write>(output: &mut W, pixel: &RGB) -> io::Result<()> {
-    const INTENSITY: Interval = Interval::new(0.000, 0.999);
+pub fn write_color<W: Write>(output: &mut W, pixel_color: &RGB) -> io::Result<()> {
+    let intensity = Interval::new(0.000, 0.999);
 
     // Apply a linear-to-gamma transform for gamma 2.
     output.write_all(&[
-        (255.999 * INTENSITY.clamp(linear_to_gamma(pixel.x()))) as u8,
-        (255.999 * INTENSITY.clamp(linear_to_gamma(pixel.y()))) as u8,
-        (255.999 * INTENSITY.clamp(linear_to_gamma(pixel.z()))) as u8,
+        (255.999 * intensity.clamp(linear_to_gamma(pixel_color.x()))) as u8,
+        (255.999 * intensity.clamp(linear_to_gamma(pixel_color.y()))) as u8,
+        (255.999 * intensity.clamp(linear_to_gamma(pixel_color.z()))) as u8,
     ])
 }

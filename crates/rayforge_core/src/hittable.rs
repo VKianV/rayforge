@@ -4,7 +4,6 @@ use crate::{
     ray::Ray,
     vec3::{Point3, Vec3},
 };
-use std::sync::Arc;
 
 pub mod hittable_list;
 pub mod shapes;
@@ -23,7 +22,7 @@ pub trait Hittable: Send + Sync {
 pub struct HitRecord {
     pub point: Point3,
     pub normal: Vec3,
-    pub material: Option<Arc<dyn Material>>,
+    pub material: Option<Material>, // was Option<Arc<dyn Material>>
     pub distance: f64,
     pub front_face: bool,
 }
