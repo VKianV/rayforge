@@ -1,5 +1,5 @@
 use crate::{
-    hittable::{HitRecord, Hittable, hittable_list::HittableList},
+    geometries::{HitRecord, Hittable, hittable_list::HittableList},
     interval::Interval,
     ray::Ray,
     vec3::Vec3,
@@ -34,7 +34,7 @@ pub fn ray_color(ray: &Ray, world: &HittableList, max_depth: usize, rng: &mut Rn
         }
         RGB::ZERO
     } else {
-      // Background gradient.
+        // Background gradient.
         let unit_direction = ray.direction().unit();
         let a = 0.5 * (unit_direction.y() + 1.0);
 

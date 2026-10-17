@@ -1,5 +1,5 @@
 use crate::{
-    hittable::{HitRecord, Hittable},
+    geometries::{HitRecord, Hittable},
     interval::Interval,
     material::Material,
     ray::Ray,
@@ -9,7 +9,7 @@ use crate::{
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    pub material: Material, // was Arc<dyn Material>
+    pub material: Material,
 }
 
 impl Sphere {

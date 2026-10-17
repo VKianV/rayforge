@@ -1,4 +1,9 @@
-use crate::{color::RGB, hittable::HitRecord, material::ScatterRecord, ray::Ray};
+use crate::{
+    color::RGB,
+    geometries::HitRecord,
+    material::{ScatterRecord, Scatterable},
+    ray::Ray,
+};
 use rander::Rng;
 
 #[derive(Clone, Copy)]
@@ -17,8 +22,10 @@ impl Dielectric {
         r0 *= r0;
         r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
     }
+}
 
-    pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord> {
+impl Scatterable for Dielectric {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord> {
         let ri = if rec.front_face {
             1.0 / self.refraction_index
         } else {

@@ -2,7 +2,7 @@ use crate::{
     app_error::AppError,
     color::{RGB, ray_color, write_color},
     config::Config,
-    hittable::hittable_list::HittableList,
+    geometries::hittable_list::HittableList,
     ray::Ray,
     vec3::{Point3, Vec3},
 };

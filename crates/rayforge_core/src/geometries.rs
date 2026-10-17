@@ -1,4 +1,5 @@
 use crate::{
+    geometries::sphere::Sphere,
     interval::Interval,
     material::Material,
     ray::Ray,
@@ -6,7 +7,6 @@ use crate::{
 };
 
 pub mod hittable_list;
-pub mod shapes;
 pub mod sphere;
 
 pub trait Hittable: Send + Sync {
@@ -22,7 +22,7 @@ pub trait Hittable: Send + Sync {
 pub struct HitRecord {
     pub point: Point3,
     pub normal: Vec3,
-    pub material: Option<Material>, // was Option<Arc<dyn Material>>
+    pub material: Option<Material>,
     pub distance: f64,
     pub front_face: bool,
 }
@@ -36,5 +36,22 @@ impl HitRecord {
         } else {
             -outward_normal
         };
+    }
+}
+
+pub enum Geometries {
+    Sphere(Sphere),
+}
+
+impl Hittable for Geometries {
+    fn hit<'a>(
+        &self,
+        ray: &Ray,
+        ray_distance_interval: Interval,
+        hit_record: &'a mut HitRecord,
+    ) -> Option<&'a mut HitRecord> {
+        match self {
+            Self::Sphere(sphere) => sphere.hit(ray, ray_distance_interval, hit_record),
+        }
     }
 }

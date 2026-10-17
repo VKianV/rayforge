@@ -1,4 +1,10 @@
-use crate::{color::RGB, hittable::HitRecord, material::ScatterRecord, ray::Ray, vec3::Vec3};
+use crate::{
+    color::RGB,
+    geometries::HitRecord,
+    material::{ScatterRecord, Scatterable},
+    ray::Ray,
+    vec3::Vec3,
+};
 use rander::Rng;
 
 #[derive(Clone, Copy)]
@@ -15,8 +21,10 @@ impl Metal {
             fuzz: fuzz.min(1.0),
         }
     }
+}
 
-    pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord> {
+impl Scatterable for Metal {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord> {
         let reflected = ray_in.direction().unit().reflect(rec.normal)
             + self.fuzz * Vec3::random_unit_vector(rng);
 
