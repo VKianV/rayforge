@@ -8,13 +8,13 @@ use crate::{
 
 pub struct Sphere {
     pub center: Point3,
-    pub radius: f64,
+    pub radius: f32,
     pub material: Material,
 }
 
 impl Sphere {
     #[must_use]
-    pub fn new(center: Point3, radius: f64, material: Material) -> Self {
+    pub fn new(center: Point3, radius: f32, material: Material) -> Self {
         Self {
             center,
             radius: radius.max(0.0),

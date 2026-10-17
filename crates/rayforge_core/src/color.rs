@@ -26,25 +26,25 @@ pub fn ray_color(ray: &Ray, world: &HittableList, max_depth: usize, rng: &mut Rn
 
     let hit_record = &mut HitRecord::default();
 
-    if let Some(record) = world.hit(ray, Interval::new(0.001, f64::INFINITY), hit_record) {
-        if let Some(mat) = record.material
-            && let Some(sc) = mat.scatter(ray, record, rng)
-        {
-            return sc.attenuation * ray_color(&sc.scattered, world, max_depth - 1, rng);
-        }
-        RGB::ZERO
-    } else {
+    let Some(record) = world.hit(ray, Interval::new(0.001, f32::INFINITY), hit_record) else {
         // Background gradient.
         let unit_direction = ray.direction().unit();
         let a = 0.5 * (unit_direction.y() + 1.0);
 
-        (1.0 - a) * RGB::ONE + a * BLUE_COLOR
-        // RGB::ONE
+        return (1.0 - a) * RGB::ONE + a * BLUE_COLOR;
+    };
+
+    if let Some(mat) = record.material
+        && let Some(sc) = mat.scatter(ray, record, rng)
+    {
+        return sc.attenuation * ray_color(&sc.scattered, world, max_depth - 1, rng);
     }
+
+    RGB::ZERO
 }
 
 #[inline]
-fn linear_to_gamma(linear_component: f64) -> f64 {
+fn linear_to_gamma(linear_component: f32) -> f32 {
     if linear_component > 0.0 {
         linear_component.sqrt()
     } else {

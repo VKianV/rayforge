@@ -4,11 +4,11 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub};
 pub type Point3 = Vec3;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct Vec3(f64, f64, f64);
+pub struct Vec3(f32, f32, f32);
 
 impl Vec3 {
     #[must_use]
-    pub const fn new(x: f64, y: f64, z: f64) -> Self {
+    pub const fn new(x: f32, y: f32, z: f32) -> Self {
         Self(x, y, z)
     }
 
@@ -17,32 +17,32 @@ impl Vec3 {
     pub const ZERO: Self = Self(0.0, 0.0, 0.0);
 
     #[must_use]
-    pub const fn x(self) -> f64 {
+    pub const fn x(self) -> f32 {
         self.0
     }
 
     #[must_use]
-    pub const fn y(self) -> f64 {
+    pub const fn y(self) -> f32{
         self.1
     }
 
     #[must_use]
-    pub const fn z(self) -> f64 {
+    pub const fn z(self) -> f32 {
         self.2
     }
 
     #[must_use]
-    pub fn length_squared(self) -> f64 {
+    pub fn length_squared(self) -> f32 {
         self.0.powi(2) + self.1.powi(2) + self.2.powi(2)
     }
 
     #[must_use]
-    pub fn length(self) -> f64 {
+    pub fn length(self) -> f32 {
         self.length_squared().sqrt()
     }
 
     #[must_use]
-    pub fn dot(self, rhs: Self) -> f64 {
+    pub fn dot(self, rhs: Self) -> f32 {
         self.0 * rhs.0 + self.1 * rhs.1 + self.2 * rhs.2
     }
 
@@ -61,13 +61,13 @@ impl Vec3 {
     }
 
     #[must_use]
-    pub fn random(min: f64, max: f64, rng: &mut Rng) -> Self {
+    pub fn random(min: f32, max: f32, rng: &mut Rng) -> Self {
         let span = max - min;
 
         Self(
-            min + rng.next_f64() * span,
-            min + rng.next_f64() * span,
-            min + rng.next_f64() * span,
+            min + rng.next_f32() * span,
+            min + rng.next_f32() * span,
+            min + rng.next_f32() * span,
         )
     }
 
@@ -97,7 +97,7 @@ impl Vec3 {
     // }
     #[must_use]
     pub fn near_zero(self) -> bool {
-        const S: f64 = 1e-8;
+        const S: f32 = 1e-8;
         self.x().abs() < S && self.y().abs() < S && self.z().abs() < S
     }
 
@@ -110,7 +110,7 @@ impl Vec3 {
     /// Refract `self` (unit vector) about `n` (unit vector).
     /// `etai_over_etat` is the ratio of incident to transmitted IOR.
     #[must_use]
-    pub fn refract(self, n: Self, etai_over_etat: f64) -> Self {
+    pub fn refract(self, n: Self, etai_over_etat: f32) -> Self {
         let cos_theta = (-self).dot(n).min(1.0);
         let ray_out_perp = etai_over_etat * (self + cos_theta * n);
         let ray_out_parallel = -(1.0 - ray_out_perp.length_squared()).abs().sqrt() * n;
@@ -121,7 +121,7 @@ impl Vec3 {
     #[must_use]
     pub fn random_in_unit_disk(rng: &mut Rng) -> Self {
         loop {
-            let p = Self::new(rng.next_f64() * 2.0 - 1.0, rng.next_f64() * 2.0 - 1.0, 0.0);
+            let p = Self::new(rng.next_f32() * 2.0 - 1.0, rng.next_f32() * 2.0 - 1.0, 0.0);
             // Same "black hole" guard as random_unit_vector.
             if 1e-160 < p.length_squared() && p.length_squared() < 1.0 {
                 return p;
@@ -162,15 +162,15 @@ impl Mul for Vec3 {
     }
 }
 
-impl Mul<f64> for Vec3 {
+impl Mul<f32> for Vec3 {
     type Output = Self;
 
-    fn mul(self, t: f64) -> Self {
+    fn mul(self, t: f32) -> Self {
         Self::new(self.0 * t, self.1 * t, self.2 * t)
     }
 }
 
-impl Mul<Vec3> for f64 {
+impl Mul<Vec3> for f32 {
     type Output = Vec3;
 
     fn mul(self, v: Vec3) -> Vec3 {
@@ -178,10 +178,10 @@ impl Mul<Vec3> for f64 {
     }
 }
 
-impl Div<f64> for Vec3 {
+impl Div<f32> for Vec3 {
     type Output = Self;
 
-    fn div(self, t: f64) -> Self {
+    fn div(self, t: f32) -> Self {
         self * (1.0 / t)
     }
 }
@@ -194,16 +194,16 @@ impl AddAssign for Vec3 {
     }
 }
 
-impl MulAssign<f64> for Vec3 {
-    fn mul_assign(&mut self, rhs: f64) {
+impl MulAssign<f32> for Vec3 {
+    fn mul_assign(&mut self, rhs: f32) {
         self.0 *= rhs;
         self.1 *= rhs;
         self.2 *= rhs;
     }
 }
 
-impl DivAssign<f64> for Vec3 {
-    fn div_assign(&mut self, rhs: f64) {
+impl DivAssign<f32> for Vec3 {
+    fn div_assign(&mut self, rhs: f32) {
         *self *= 1.0 / rhs;
     }
 }

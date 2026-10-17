@@ -23,7 +23,7 @@ pub struct HitRecord {
     pub point: Point3,
     pub normal: Vec3,
     pub material: Option<Material>,
-    pub distance: f64,
+    pub distance: f32,
     pub front_face: bool,
 }
 

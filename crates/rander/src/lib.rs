@@ -68,6 +68,20 @@ impl Rng {
         }
     }
 
+    #[inline]
+    /// Returns a random f32 in [0, 1).
+    pub fn next_f32(&mut self) -> f32 {
+        // Use the top 24 bits to fill the mantissa of an f32
+        (self.next_u64() >> 40) as f32 * (1.0 / (1_u32 << 24) as f32)
+    }
+    
+    #[inline]
+    /// Returns a random f32 in [min, max).
+    pub fn range_f32(&mut self, min: f32, max: f32) -> f32 {
+        debug_assert!(min < max);
+        min + (max - min) * self.next_f32()
+    }
+
     #[must_use]
     /// Split into a new, independent RNG.
     /// Use this to give each thread its own non-overlapping random stream.

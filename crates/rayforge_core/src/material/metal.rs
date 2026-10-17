@@ -10,12 +10,12 @@ use rander::Rng;
 #[derive(Clone, Copy)]
 pub struct Metal {
     pub albedo: RGB,
-    fuzz: f64,
+    fuzz: f32,
 }
 
 impl Metal {
     #[must_use]
-    pub fn new(albedo: RGB, fuzz: f64) -> Self {
+    pub fn new(albedo: RGB, fuzz: f32) -> Self {
         Self {
             albedo,
             fuzz: fuzz.min(1.0),
