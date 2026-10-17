@@ -2,7 +2,7 @@ pub mod app_error;
 pub mod camera;
 pub mod color;
 pub mod config;
-pub mod hittable;
+pub mod geometries;
 pub mod interval;
 pub mod material;
 pub mod ray;

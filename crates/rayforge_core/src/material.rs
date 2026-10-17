@@ -1,6 +1,6 @@
 use crate::{
     color::RGB,
-    hittable::HitRecord,
+    geometries::HitRecord,
     material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal},
     ray::Ray,
 };
@@ -9,6 +9,10 @@ use rander::Rng;
 pub mod dielectric;
 pub mod lambertian;
 pub mod metal;
+
+pub trait Scatterable {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord>;
+}
 
 /// What a material returns when a ray scatters off it.
 pub struct ScatterRecord {

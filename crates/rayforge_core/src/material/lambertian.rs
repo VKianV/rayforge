@@ -1,4 +1,10 @@
-use crate::{color::RGB, hittable::HitRecord, material::ScatterRecord, ray::Ray, vec3::Vec3};
+use crate::{
+    color::RGB,
+    geometries::HitRecord,
+    material::{ScatterRecord, Scatterable},
+    ray::Ray,
+    vec3::Vec3,
+};
 use rander::Rng;
 
 #[derive(Clone, Copy)]
@@ -11,8 +17,10 @@ impl Lambertian {
     pub const fn new(albedo: RGB) -> Self {
         Self { albedo }
     }
+}
 
-    pub fn scatter(&self, _ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord> {
+impl Scatterable for Lambertian {
+    fn scatter(&self, _ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord> {
         let mut dir = rec.normal + Vec3::random_unit_vector(rng);
 
         if dir.near_zero() {

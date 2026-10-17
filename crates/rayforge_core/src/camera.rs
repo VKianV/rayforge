@@ -2,7 +2,7 @@ use crate::{
     app_error::AppError,
     color::{RGB, ray_color, write_color},
     config::Config,
-    hittable::hittable_list::HittableList,
+    geometries::hittable_list::HittableList,
     ray::Ray,
     vec3::{Point3, Vec3},
 };
@@ -21,12 +21,12 @@ use std::{
 pub struct CameraBuilder {
     output_name: String,
     num_threads: Option<usize>,
-    aspect_ratio: f64,
+    aspect_ratio: f32,
     image_width_pixels: usize,
     image_height_pixels: usize,
     samples_per_pixel: usize,
     max_depth: usize,
-    vfov: f64,
+    vfov: f32,
 
     // camera position & orientation
     lookfrom: Point3,
@@ -34,8 +34,8 @@ pub struct CameraBuilder {
     vup: Vec3,
 
     // defocus blur
-    defocus_angle: f64,
-    focus_dist: f64,
+    defocus_angle: f32,
+    focus_dist: f32,
 }
 
 impl Default for CameraBuilder {
@@ -80,7 +80,7 @@ impl CameraBuilder {
         if let Ok(v) = config.get_usize("image_height_pixels") {
             defaults.image_height_pixels = v;
         }
-        if let Ok(v) = config.get_f64("aspect_ratio") {
+        if let Ok(v) = config.get_f32("aspect_ratio") {
             defaults.aspect_ratio = v;
         }
         if let Ok(v) = config.get_string("output_name") {
@@ -95,23 +95,23 @@ impl CameraBuilder {
         if let Ok(v) = config.get_usize("num_threads") {
             defaults.num_threads = Some(v);
         }
-        if let Ok(v) = config.get_f64("vfov") {
+        if let Ok(v) = config.get_f32("vfov") {
             defaults.vfov = v;
         }
         // --- position / orientation ---
-        if let Ok(v) = config.get_f64("focus_dist") {
+        if let Ok(v) = config.get_f32("focus_dist") {
             defaults.focus_dist = v;
         }
-        if let Ok(v) = config.get_f64("defocus_angle") {
+        if let Ok(v) = config.get_f32("defocus_angle") {
             defaults.defocus_angle = v;
         }
 
         // Helper: parse a 3-vector from three scalar keys, leaving defaults untouched
         // if any component is missing.
         let parse_vec3 = |cfg: &Config, base: &str, fallback: Vec3| -> Vec3 {
-            let x = cfg.get_f64(&format!("{base}_x"));
-            let y = cfg.get_f64(&format!("{base}_y"));
-            let z = cfg.get_f64(&format!("{base}_z"));
+            let x = cfg.get_f32(&format!("{base}_x"));
+            let y = cfg.get_f32(&format!("{base}_y"));
+            let z = cfg.get_f32(&format!("{base}_z"));
             match (x, y, z) {
                 (Ok(x), Ok(y), Ok(z)) => Vec3::new(x, y, z),
                 _ => fallback,
@@ -144,7 +144,7 @@ impl CameraBuilder {
     }
 
     #[must_use]
-    pub const fn vfov(mut self, deg: f64) -> Self {
+    pub const fn vfov(mut self, deg: f32) -> Self {
         self.vfov = deg;
         self
     }
@@ -168,7 +168,7 @@ impl CameraBuilder {
     }
 
     #[must_use]
-    pub const fn aspect_ratio(mut self, n: f64) -> Self {
+    pub const fn aspect_ratio(mut self, n: f32) -> Self {
         self.aspect_ratio = n;
         self
     }
@@ -192,13 +192,13 @@ impl CameraBuilder {
     }
 
     #[must_use]
-    pub const fn focus_dist(mut self, d: f64) -> Self {
+    pub const fn focus_dist(mut self, d: f32) -> Self {
         self.focus_dist = d;
         self
     }
 
     #[must_use]
-    pub const fn defocus_angle(mut self, deg: f64) -> Self {
+    pub const fn defocus_angle(mut self, deg: f32) -> Self {
         self.defocus_angle = deg;
         self
     }
@@ -207,7 +207,7 @@ impl CameraBuilder {
         let camera_center = self.lookfrom;
         let focus_dist = self.focus_dist;
         let aspect_ratio = self.aspect_ratio;
-        let image_height_pixels = (self.image_width_pixels as f64 / aspect_ratio) as usize;
+        let image_height_pixels = (self.image_width_pixels as f32 / aspect_ratio) as usize;
 
         // --- camera frame basis (u, v, w), right-handed, w opposite view dir ---
         let w = (self.lookfrom - self.lookat).unit();
@@ -224,8 +224,8 @@ impl CameraBuilder {
         let viewport_u = u * viewport_width;
         let viewport_v = -v * viewport_height;
 
-        let pixel_delta_width = viewport_u / self.image_width_pixels as f64;
-        let pixel_delta_height = viewport_v / image_height_pixels as f64;
+        let pixel_delta_width = viewport_u / self.image_width_pixels as f32;
+        let pixel_delta_height = viewport_v / image_height_pixels as f32;
 
         let viewport_top_left =
             camera_center - w * focus_dist - viewport_u / 2.0 - viewport_v / 2.0;
@@ -272,7 +272,7 @@ pub struct Camera {
     image_height_pixels: usize,
     samples_per_pixel: usize,
     max_depth: usize,
-    defocus_angle: f64,
+    defocus_angle: f32,
 
     // derived
     pixel_delta_width: Vec3,
@@ -287,8 +287,8 @@ pub struct Camera {
 
 impl Camera {
     #[inline]
-    fn sample_square(rng: &mut Rng) -> (f64, f64) {
-        (rng.next_f64() - 0.5, rng.next_f64() - 0.5)
+    fn sample_square(rng: &mut Rng) -> (f32, f32) {
+        (rng.next_f32() - 0.5, rng.next_f32() - 0.5)
     }
 
     /// Random point on the camera's defocus disk (in world space).
@@ -355,11 +355,11 @@ impl Camera {
 
                         let mut chunk = Vec::with_capacity(rows * self.image_width_pixels * 3);
 
-                        let scale = 1.0 / self.samples_per_pixel as f64;
+                        let scale = 1.0 / self.samples_per_pixel as f32;
 
                         for h in start_row..end_row {
                             let mut pixel_center =
-                                self.top_left_pixel_position + h as f64 * self.pixel_delta_height;
+                                self.top_left_pixel_position + h as f32 * self.pixel_delta_height;
 
                             for _ in 0..self.image_width_pixels {
                                 let mut pixel_color = RGB::ZERO;
