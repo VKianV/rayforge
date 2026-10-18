@@ -42,7 +42,7 @@ impl Default for CameraBuilder {
     fn default() -> Self {
         Self {
             output_name: "render.ppm".to_string(),
-            aspect_ratio: 1.777_777_777_8,
+            aspect_ratio: 1.777_777_8,
             num_threads: None,
             image_width_pixels: 1280,
             image_height_pixels: 720,

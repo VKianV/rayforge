@@ -30,11 +30,30 @@ pub enum Material {
 
 impl Material {
     /// `Some(rec)` if the ray scatters, `None` if absorbed.
+    #[inline]
     pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord> {
         match self {
             Self::Lambertian(m) => m.scatter(ray_in, rec, rng),
             Self::Metal(m) => m.scatter(ray_in, rec, rng),
             Self::Dielectric(m) => m.scatter(ray_in, rec, rng),
         }
+    }
+}
+
+impl From<Lambertian> for Material {
+    fn from(m: Lambertian) -> Self {
+        Self::Lambertian(m)
+    }
+}
+
+impl From<Metal> for Material {
+    fn from(m: Metal) -> Self {
+        Self::Metal(m)
+    }
+}
+
+impl From<Dielectric> for Material {
+    fn from(m: Dielectric) -> Self {
+        Self::Dielectric(m)
     }
 }

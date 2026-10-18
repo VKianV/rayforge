@@ -15,7 +15,7 @@ pub struct Metal {
 
 impl Metal {
     #[must_use]
-    pub fn new(albedo: RGB, fuzz: f32) -> Self {
+    pub const fn new(albedo: RGB, fuzz: f32) -> Self {
         Self {
             albedo,
             fuzz: fuzz.min(1.0),

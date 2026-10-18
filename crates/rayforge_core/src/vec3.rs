@@ -22,7 +22,7 @@ impl Vec3 {
     }
 
     #[must_use]
-    pub const fn y(self) -> f32{
+    pub const fn y(self) -> f32 {
         self.1
     }
 
