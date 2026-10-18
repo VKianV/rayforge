@@ -23,8 +23,8 @@ impl HittableList {
     }
 
     #[must_use]
-    pub fn add(mut self, object: Geometries) -> Self {
-        self.objects.push(object);
+    pub fn add(mut self, object: impl Into<Geometries>) -> Self {
+        self.objects.push(object.into());
 
         self
     }
