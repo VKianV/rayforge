@@ -32,6 +32,7 @@ pub fn ray_color(ray: &Ray, world: &HittableList, max_depth: usize, rng: &mut Rn
         let a = 0.5 * (unit_direction.y() + 1.0);
 
         return (1.0 - a) * RGB::ONE + a * BLUE_COLOR;
+        // return RGB::ONE;
     };
 
     if let Some(mat) = record.material
