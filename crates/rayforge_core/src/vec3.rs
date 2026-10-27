@@ -7,14 +7,48 @@ pub type Point3 = Vec3;
 pub struct Vec3(f32, f32, f32);
 
 impl Vec3 {
+    pub const ZERO: Self = Self(0.0, 0.0, 0.0);
+    pub const ONE: Self = Self(1.0, 1.0, 1.0);
+
     #[must_use]
     pub const fn new(x: f32, y: f32, z: f32) -> Self {
         Self(x, y, z)
     }
 
-    pub const ONE: Self = Self(1.0, 1.0, 1.0);
+    #[must_use]
+    pub fn random_range(min: f32, max: f32, rng: &mut Rng) -> Self {
+        Self(
+            rng.range_f32(min, max),
+            rng.range_f32(min, max),
+            rng.range_f32(min, max),
+        )
+    }
 
-    pub const ZERO: Self = Self(0.0, 0.0, 0.0);
+    /// Rejection-sample a uniformly distributed unit vector on the sphere.
+    #[must_use]
+    pub fn random_unit_vector(rng: &mut Rng) -> Self {
+        loop {
+            let p = Self::random_range(-1.0, 1.0, rng);
+            let lensq = p.length_squared();
+
+            // Reject the "black hole" near the origin so normalizing
+            // can't produce [±inf, ±inf, ±inf] from float underflow.
+            if 1e-160 < lensq && lensq <= 1.0 {
+                return p / lensq.sqrt();
+            }
+        }
+    }
+
+    #[must_use]
+    pub fn random_in_unit_disk(rng: &mut Rng) -> Self {
+        loop {
+            let p = Self::new(rng.next_f32() * 2.0 - 1.0, rng.next_f32() * 2.0 - 1.0, 0.0);
+            // Same "black hole" guard as random_unit_vector.
+            if 1e-160 < p.length_squared() && p.length_squared() < 1.0 {
+                return p;
+            }
+        }
+    }
 
     #[must_use]
     pub const fn x(self) -> f32 {
@@ -22,23 +56,13 @@ impl Vec3 {
     }
 
     #[must_use]
-    pub const fn y(self) -> f32{
+    pub const fn y(self) -> f32 {
         self.1
     }
 
     #[must_use]
     pub const fn z(self) -> f32 {
         self.2
-    }
-
-    #[must_use]
-    pub fn length_squared(self) -> f32 {
-        self.0.powi(2) + self.1.powi(2) + self.2.powi(2)
-    }
-
-    #[must_use]
-    pub fn length(self) -> f32 {
-        self.length_squared().sqrt()
     }
 
     #[must_use]
@@ -56,49 +80,24 @@ impl Vec3 {
     }
 
     #[must_use]
+    pub fn length_squared(self) -> f32 {
+        self.0.powi(2) + self.1.powi(2) + self.2.powi(2)
+    }
+
+    #[must_use]
+    pub fn length(self) -> f32 {
+        self.length_squared().sqrt()
+    }
+
+    #[must_use]
     pub fn unit(self) -> Self {
         self / self.length()
     }
 
     #[must_use]
-    pub fn random(min: f32, max: f32, rng: &mut Rng) -> Self {
-        let span = max - min;
-
-        Self(
-            min + rng.next_f32() * span,
-            min + rng.next_f32() * span,
-            min + rng.next_f32() * span,
-        )
-    }
-
-    /// Rejection-sample a uniformly distributed unit vector on the sphere.
-    #[must_use]
-    pub fn random_unit_vector(rng: &mut Rng) -> Self {
-        loop {
-            let p = Self::random(-1.0, 1.0, rng);
-            let lensq = p.length_squared();
-            // Reject the "black hole" near the origin so normalizing
-            // can't produce [±inf, ±inf, ±inf] from float underflow.
-            if 1e-160 < lensq && lensq <= 1.0 {
-                return p / lensq.sqrt();
-            }
-        }
-    }
-
-    // /// Random direction on the same hemisphere as `normal`.
-    // #[must_use]
-    // pub fn random_on_hemisphere(normal: Self, rng: &mut Rng) -> Self {
-    //     let on_unit_sphere = Self::random_unit_vector(rng);
-    //     if on_unit_sphere.dot(normal) > 0.0 {
-    //         on_unit_sphere
-    //     } else {
-    //         -on_unit_sphere
-    //     }
-    // }
-    #[must_use]
     pub fn near_zero(self) -> bool {
-        const S: f32 = 1e-8;
-        self.x().abs() < S && self.y().abs() < S && self.z().abs() < S
+        let s = 1e-8;
+        self.x().abs() < s && self.y().abs() < s && self.z().abs() < s
     }
 
     /// Reflect `self` about `n` (n must be unit length).
@@ -116,17 +115,6 @@ impl Vec3 {
         let ray_out_parallel = -(1.0 - ray_out_perp.length_squared()).abs().sqrt() * n;
 
         ray_out_perp + ray_out_parallel
-    }
-
-    #[must_use]
-    pub fn random_in_unit_disk(rng: &mut Rng) -> Self {
-        loop {
-            let p = Self::new(rng.next_f32() * 2.0 - 1.0, rng.next_f32() * 2.0 - 1.0, 0.0);
-            // Same "black hole" guard as random_unit_vector.
-            if 1e-160 < p.length_squared() && p.length_squared() < 1.0 {
-                return p;
-            }
-        }
     }
 }
 

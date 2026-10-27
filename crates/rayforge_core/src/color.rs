@@ -1,6 +1,7 @@
 use crate::{
     geometries::{HitRecord, Hittable, hittable_list::HittableList},
     interval::Interval,
+    material::Scatterable,
     ray::Ray,
     vec3::Vec3,
 };

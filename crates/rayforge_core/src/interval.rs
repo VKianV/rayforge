@@ -1,49 +1,36 @@
+use std::ops::{Add, Div, Mul, Sub};
+
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Interval {
-    pub min: f32,
-    pub max: f32,
+pub struct Interval<T = f32> {
+    pub min: T,
+    pub max: T,
 }
 
-impl Interval {
-    /// Default interval is empty.
-    pub const EMPTY: Self = Self {
-        min: f32::INFINITY,
-        max: f32::NEG_INFINITY,
-    };
-
-    pub const UNIVERSE: Self = Self {
-        min: f32::NEG_INFINITY,
-        max: f32::INFINITY,
-    };
-
-    /// The half-open ray range: from the camera plane outward to infinity.
-    pub const NON_NEGATIVE: Self = Self {
-        min: 0.0,
-        max: f32::INFINITY,
-    };
-
-    #[must_use]
-    pub const fn new(min: f32, max: f32) -> Self {
+impl<T> Interval<T>
+where
+    T: Copy + PartialOrd + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Div<Output = T>,
+{
+    pub const fn new(min: T, max: T) -> Self {
         Self { min, max }
     }
 
-    #[must_use]
-    pub fn size(&self) -> f32 {
+    pub fn size(&self) -> T {
         self.max - self.min
     }
 
-    #[must_use]
-    pub fn contains(&self, x: f32) -> bool {
+    pub fn map_to(&self, sample: T, dist_min: T, dist_max: T) -> T {
+        dist_min + (dist_max - dist_min) * (sample - self.min) / (self.max - self.min)
+    }
+
+    pub fn contains(&self, x: T) -> bool {
         self.min <= x && x <= self.max
     }
 
-    #[must_use]
-    pub fn surrounds(&self, x: f32) -> bool {
+    pub fn surrounds(&self, x: T) -> bool {
         self.min < x && x < self.max
     }
 
-    #[must_use]
-    pub fn clamp(&self, x: f32) -> f32 {
+    pub fn clamp(&self, x: T) -> T {
         if x < self.min {
             self.min
         } else if x > self.max {
@@ -54,7 +41,24 @@ impl Interval {
     }
 }
 
-impl Default for Interval {
+impl Interval<f32> {
+    pub const EMPTY: Self = Self {
+        min: f32::INFINITY,
+        max: f32::NEG_INFINITY,
+    };
+
+    pub const UNIVERSE: Self = Self {
+        min: f32::NEG_INFINITY,
+        max: f32::INFINITY,
+    };
+
+    pub const NON_NEGATIVE: Self = Self {
+        min: 0.0,
+        max: f32::INFINITY,
+    };
+}
+
+impl Default for Interval<f32> {
     fn default() -> Self {
         Self::EMPTY
     }

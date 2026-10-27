@@ -55,3 +55,9 @@ impl Hittable for Geometries {
         }
     }
 }
+
+impl From<Sphere> for Geometries {
+    fn from(s: Sphere) -> Self {
+        Self::Sphere(s)
+    }
+}
