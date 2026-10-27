@@ -47,6 +47,20 @@ impl Rng {
     }
 
     #[inline]
+    /// Returns a random f32 in [0, 1).
+    pub fn next_f32(&mut self) -> f32 {
+        // Use the top 24 bits to fill the mantissa of an f32
+        (self.next_u64() >> 40) as f32 * (1.0 / (1_u32 << 24) as f32)
+    }
+
+    #[inline]
+    /// Returns a random f32 in [min, max).
+    pub fn range_f32(&mut self, min: f32, max: f32) -> f32 {
+        debug_assert!(min < max);
+        min + (max - min) * self.next_f32()
+    }
+
+    #[inline]
     /// Returns a random f64 in [0, 1). Essential for ray tracing.
     pub fn next_f64(&mut self) -> f64 {
         // Use the top 53 bits to fill the mantissa of an f64
@@ -66,20 +80,6 @@ impl Rng {
             let j = self.range_u64(0, i as u64 + 1) as usize;
             xs.swap(i, j);
         }
-    }
-
-    #[inline]
-    /// Returns a random f32 in [0, 1).
-    pub fn next_f32(&mut self) -> f32 {
-        // Use the top 24 bits to fill the mantissa of an f32
-        (self.next_u64() >> 40) as f32 * (1.0 / (1_u32 << 24) as f32)
-    }
-
-    #[inline]
-    /// Returns a random f32 in [min, max).
-    pub fn range_f32(&mut self, min: f32, max: f32) -> f32 {
-        debug_assert!(min < max);
-        min + (max - min) * self.next_f32()
     }
 
     #[must_use]

@@ -1,7 +1,6 @@
 pub mod app_error;
 pub mod camera;
 pub mod color;
-pub mod common;
 pub mod config;
 pub mod geometries;
 pub mod interval;

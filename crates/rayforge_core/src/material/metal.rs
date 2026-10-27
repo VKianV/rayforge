@@ -24,17 +24,22 @@ impl Metal {
 }
 
 impl Scatterable for Metal {
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord> {
-        let reflected = ray_in.direction().unit().reflect(rec.normal)
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_record: &HitRecord,
+        rng: &mut Rng,
+    ) -> Option<ScatterRecord> {
+        let reflected = ray_in.direction().unit().reflect(hit_record.normal)
             + self.fuzz * Vec3::random_unit_vector(rng);
 
-        if reflected.dot(rec.normal) <= 0.0 {
+        if reflected.dot(hit_record.normal) <= 0.0 {
             return None; // absorbed
         }
 
         Some(ScatterRecord {
             attenuation: self.albedo,
-            scattered: Ray::new(rec.point, reflected),
+            scattered: Ray::new(hit_record.point, reflected),
         })
     }
 }

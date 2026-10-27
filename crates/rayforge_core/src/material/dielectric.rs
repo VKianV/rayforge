@@ -25,27 +25,32 @@ impl Dielectric {
 }
 
 impl Scatterable for Dielectric {
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord> {
-        let ri = if rec.front_face {
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_record: &HitRecord,
+        rng: &mut Rng,
+    ) -> Option<ScatterRecord> {
+        let ri = if hit_record.front_face {
             1.0 / self.refraction_index
         } else {
             self.refraction_index
         };
 
         let unit_dir = ray_in.direction().unit();
-        let cos_theta = (-unit_dir).dot(rec.normal).min(1.0);
+        let cos_theta = (-unit_dir).dot(hit_record.normal).min(1.0);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
         let cannot_refract = ri * sin_theta > 1.0;
         let direction = if cannot_refract || Self::reflectance(cos_theta, ri) > rng.next_f32() {
-            unit_dir.reflect(rec.normal)
+            unit_dir.reflect(hit_record.normal)
         } else {
-            unit_dir.refract(rec.normal, ri)
+            unit_dir.refract(hit_record.normal, ri)
         };
 
         Some(ScatterRecord {
             attenuation: RGB::ONE,
-            scattered: Ray::new(rec.point, direction),
+            scattered: Ray::new(hit_record.point, direction),
         })
     }
 }

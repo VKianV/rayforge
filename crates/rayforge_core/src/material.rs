@@ -11,7 +11,8 @@ pub mod lambertian;
 pub mod metal;
 
 pub trait Scatterable {
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord>;
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord, rng: &mut Rng)
+    -> Option<ScatterRecord>;
 }
 
 /// What a material returns when a ray scatters off it.
@@ -20,7 +21,6 @@ pub struct ScatterRecord {
     pub scattered: Ray,
 }
 
-/// Concrete material. Plain `Copy` data — no `Arc`, no `dyn`, no atomic refcount.
 #[derive(Clone, Copy)]
 pub enum Material {
     Lambertian(Lambertian),
@@ -28,14 +28,19 @@ pub enum Material {
     Dielectric(Dielectric),
 }
 
-impl Material {
+impl Scatterable for Material {
     /// `Some(rec)` if the ray scatters, `None` if absorbed.
     #[inline]
-    pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, rng: &mut Rng) -> Option<ScatterRecord> {
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_record: &HitRecord,
+        rng: &mut Rng,
+    ) -> Option<ScatterRecord> {
         match self {
-            Self::Lambertian(m) => m.scatter(ray_in, rec, rng),
-            Self::Metal(m) => m.scatter(ray_in, rec, rng),
-            Self::Dielectric(m) => m.scatter(ray_in, rec, rng),
+            Self::Lambertian(m) => m.scatter(ray_in, hit_record, rng),
+            Self::Metal(m) => m.scatter(ray_in, hit_record, rng),
+            Self::Dielectric(m) => m.scatter(ray_in, hit_record, rng),
         }
     }
 }
